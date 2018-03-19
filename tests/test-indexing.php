@@ -20,6 +20,10 @@ class IndexingTest extends WP_UnitTestCase {
 	 */
 	public function test_indexing() {
 		global $wpdb, $relevanssi_variables;
+		// phpcs:disable WordPress.WP.PreparedSQL
+
+		// Truncate the index.
+		relevanssi_truncate_index();
 
 		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
 		$post_count       = 10;
@@ -73,7 +77,7 @@ class IndexingTest extends WP_UnitTestCase {
 
 		// Get a post ID and add some comments to it.
 		$comment_post_id = array_pop( $post_ids );
-		$comment_ids = $this->factory->comment->create_many( 10, array( 'comment_post_ID' => $comment_post_id ) );
+		$comment_ids     = $this->factory->comment->create_many( 10, array( 'comment_post_ID' => $comment_post_id ) );
 
 		// There should be one post with comments in the index.
 		$comment_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='comment'" );
