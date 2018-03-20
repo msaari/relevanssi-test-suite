@@ -30,7 +30,7 @@ class IndexingTest extends WP_UnitTestCase {
 		$post_ids         = $this->factory->post->create_many( $post_count );
 
 		$distinct_docs = $wpdb->get_var( "SELECT COUNT(DISTINCT(doc)) FROM $relevanssi_table" );
-
+		// There should be $post_count posts in the index.
 		$this->assertEquals( $post_count, $distinct_docs );
 
 		// This function should be able to count the number of posts.
@@ -67,6 +67,23 @@ class IndexingTest extends WP_UnitTestCase {
 		$post_rows = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $relevanssi_table WHERE doc = %d", $delete_post_id ) );
 		$this->assertEquals( 0, $post_rows );
 
+		return $post_ids;
+	}
+
+	/**
+	 * Tests comment indexing.
+	 *
+	 * Creates some comments and sees if they get indexed.
+	 *
+	 * @depends test_indexing
+	 *
+	 * @param array $post_ids An array of post IDs in the index.
+	 */
+	public function test_comments( $post_ids ) {
+		global $wpdb, $relevanssi_variables;
+		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
+		// phpcs:disable WordPress.WP.PreparedSQL
+
 		// It's necessary to hook comment indexing to 'wp_insert_comment'. It's
 		// usually hooked to 'comment_post', but that doesn't trigger from the
 		// factory.
@@ -82,23 +99,5 @@ class IndexingTest extends WP_UnitTestCase {
 		// There should be one post with comments in the index.
 		$comment_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='comment'" );
 		$this->assertEquals( 1, $comment_rows );
-
 	}
-}
-
-/**
- * Helpful little debugging function.
- *
- * @param int $post_id Post ID to examine. Default null, will then dump the whole DB.
- */
-function dump_relevanssi_db( $post_id = null ) {
-	global $wpdb, $relevanssi_variables;
-
-	$relevanssi_table = $relevanssi_variables['relevanssi_table'];
-
-	$post_id_query = '';
-	if ( null !== $post_id ) {
-		$post_id_query = " WHERE doc=$post_id ";
-	}
-	var_dump( $wpdb->get_results( "SELECT * FROM $relevanssi_table $post_id_query" ) );
 }
