@@ -64,13 +64,13 @@ class IndexingTest extends WP_UnitTestCase {
 		relevanssi_remove_doc( $delete_post_id );
 
 		// There should be zero rows for this post.
-		$post_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE doc=$delete_post_id" );
+		$post_rows = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $relevanssi_table WHERE doc = %d", $delete_post_id ) );
 		$this->assertEquals( 0, $post_rows );
 
 		// It's necessary to hook comment indexing to 'wp_insert_comment'. It's
 		// usually hooked to 'comment_post', but that doesn't trigger from the
 		// factory.
-		add_action( 'wp_insert_comment', 'relevanssi_comment_index' );
+		add_action( 'wp_insert_comment', 'relevanssi_index_comment' );
 
 		// Enable comment indexing.
 		update_option( 'relevanssi_index_comments', 'normal' );
