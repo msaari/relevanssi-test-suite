@@ -24,7 +24,9 @@ class ExcerptTest extends WP_UnitTestCase {
 	 * Generates one post with couple of paragraphs of "Lorem Ipsum" as content and
 	 * the word "keyword" in the end of the post.
 	 */
-	public static function setUpBeforeClass() {
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+
 		self::$excerpt_length = 30;
 
 		update_option( 'relevanssi_excerpts', 'on' );
@@ -116,5 +118,12 @@ END;
 		$highlight_location = strpos( $excerpt, '<strong>' );
 		// There should be some highlighting.
 		$this->assertNotFalse( $highlight_location );
+	}
+
+	/**
+	 * Uninstalls Relevanssi.
+	 */
+	public static function wpTearDownAfterClass() {
+		relevanssi_uninstall();
 	}
 }

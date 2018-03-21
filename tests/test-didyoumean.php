@@ -13,7 +13,9 @@ class DidYouMeanTest extends WP_UnitTestCase {
 	/**
 	 * Sets up the tests.
 	 */
-	public static function setUpBeforeClass() {
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+
 		// Truncate the index.
 		relevanssi_truncate_index();
 

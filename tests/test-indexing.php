@@ -10,6 +10,12 @@
  * Test Relevanssi indexing.
  */
 class IndexingTest extends WP_UnitTestCase {
+	/**
+	 * Installs Relevanssi.
+	 */
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+	}
 
 	/**
 	 * Test indexing process.
@@ -99,5 +105,12 @@ class IndexingTest extends WP_UnitTestCase {
 		// There should be one post with comments in the index.
 		$comment_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='comment'" );
 		$this->assertEquals( 1, $comment_rows );
+	}
+
+	/**
+	 * Uninstalls Relevanssi.
+	 */
+	public static function wpTearDownAfterClass() {
+		relevanssi_uninstall();
 	}
 }

@@ -24,7 +24,9 @@ class StopwordTest extends WP_UnitTestCase {
 	 * Creates 10 posts, with the default content. Assumes the posts will have the
 	 * word "content" in the content.
 	 */
-	public static function setUpBeforeClass() {
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+
 		// Truncate the index.
 		relevanssi_truncate_index();
 
@@ -55,5 +57,12 @@ class StopwordTest extends WP_UnitTestCase {
 		$success = relevanssi_remove_stopword( 'content', false );
 		// Removing the stopword should work.
 		$this->assertTrue( $success );
+	}
+
+	/**
+	 * Uninstalls Relevanssi.
+	 */
+	public static function wpTearDownAfterClass() {
+		relevanssi_uninstall();
 	}
 }

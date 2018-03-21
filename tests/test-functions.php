@@ -11,6 +11,13 @@
  */
 class FunctionTest extends WP_UnitTestCase {
 	/**
+	 * Installs Relevanssi.
+	 */
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+	}
+
+	/**
 	 * Test phrase recognition.
 	 */
 	public function test_phrase_recognition() {
@@ -58,5 +65,12 @@ class FunctionTest extends WP_UnitTestCase {
 		$query_pre  = 'dog 0123 numbers cat';
 		$query_post = relevanssi_add_synonyms( $query_pre );
 		$this->assertEquals( 'dog 0123 numbers cat hound cat numbers dog', $query_post );
+	}
+
+	/**
+	 * Uninstalls Relevanssi.
+	 */
+	public static function wpTearDownAfterClass() {
+		relevanssi_uninstall();
 	}
 }

@@ -8,6 +8,8 @@
 
 /**
  * Test Relevanssi attachment indexing.
+ *
+ * @group attachments
  */
 class AttachmentTest extends WP_UnitTestCase {
 	/**
@@ -19,7 +21,9 @@ class AttachmentTest extends WP_UnitTestCase {
 	 * - DOCX file that says "This is a DOCX file."
 	 * - ODT file that says "This is an ODT file."
 	 */
-	public static function setUpBeforeClass() {
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+
 		update_option( 'relevanssi_read_new_files', 'on' );
 		update_option( 'relevanssi_send_pdf_files', 'on' );
 		update_option( 'relevanssi_index_post_types', array( 'post', 'attachment' ) );
@@ -100,5 +104,12 @@ class AttachmentTest extends WP_UnitTestCase {
 
 		// There should be one post matching the search.
 		$this->assertEquals( 1, count( $posts ) );
+	}
+
+	/**
+	 * Uninstalls Relevanssi.
+	 */
+	public static function wpTearDownAfterClass() {
+		relevanssi_uninstall();
 	}
 }

@@ -41,7 +41,9 @@ class SearchingTest extends WP_UnitTestCase {
 	/**
 	 * Sets up the index.
 	 */
-	public static function setUpBeforeClass() {
+	public static function wpSetUpBeforeClass() {
+		relevanssi_install();
+
 		global $wpdb, $relevanssi_variables;
 		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
 		// phpcs:disable WordPress.WP.PreparedSQL
@@ -321,5 +323,12 @@ class SearchingTest extends WP_UnitTestCase {
 
 		// First post title should match the first title in alpha order.
 		$this->assertEquals( $first_post_title, $first_post->post_title );
+	}
+
+	/**
+	 * Uninstalls Relevanssi.
+	 */
+	public static function wpTearDownAfterClass() {
+		relevanssi_uninstall();
 	}
 }
