@@ -25,6 +25,7 @@ class AttachmentTest extends WP_UnitTestCase {
 		update_option( 'relevanssi_index_post_types', array( 'post', 'attachment' ) );
 		update_option( 'relevanssi_implicit_operator', 'AND' );
 		update_option( 'relevanssi_api_key', getenv( 'RELEVANSSI_KEY' ) );
+		update_option( 'relevanssi_link_pdf_files', 'on' );
 
 		// Truncate the index.
 		relevanssi_truncate_index();
@@ -64,6 +65,11 @@ class AttachmentTest extends WP_UnitTestCase {
 
 		// There should be one post matching the search.
 		$this->assertEquals( 1, count( $posts ) );
+
+		// Check that get_permalink() returns a direct link to the .pdf file.
+		$permalink = get_permalink( $posts[0]->ID );
+		$suffix    = substr( $permalink, -4 );
+		$this->assertEquals( '.pdf', $suffix );
 
 		// DOCX.
 		$args = array(
