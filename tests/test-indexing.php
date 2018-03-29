@@ -108,6 +108,37 @@ class IndexingTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Tests case where same term appears in tag and category.
+	 *
+	 * Version 2.1.1 was broken this way.
+	 *
+	 * @depends test_indexing
+	 *
+	 * @param array $post_ids An array of post IDs in the index.
+	 */
+	public function test_tag_category( $post_ids ) {
+		global $wpdb, $relevanssi_variables;
+		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
+		// phpcs:disable WordPress.WP.PreparedSQL
+
+		$post_id    = array_pop( $post_ids );
+		$cat_ids    = array();
+		$cat_ids[0] = wp_create_category( 'foo' );
+		$cat_ids[1] = wp_create_category( 'bar' );
+		$cat_ids[2] = wp_create_category( 'baz' );
+		wp_set_post_terms( $post_id, array( 'foo', 'bar', 'baz' ), 'post_tag', true );
+		wp_set_post_terms( $post_id, $cat_ids, 'category', true );
+
+		update_option( 'relevanssi_index_taxonomies_list', array( 'post_tag', 'category' ) );
+
+		// Rebuild the index. This shouldn't end up in error.
+		relevanssi_build_index( false, false, 200, false );
+
+		$foo_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='foo'" );
+		$this->assertEquals( 1, $foo_rows );
+	}
+
+	/**
 	 * Uninstalls Relevanssi.
 	 */
 	public static function wpTearDownAfterClass() {
