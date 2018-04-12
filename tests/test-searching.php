@@ -326,6 +326,50 @@ class SearchingTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Tests post exclusion setting.
+	 *
+	 * Tests that post exclusion doesn't break the search, if there's a comma in the
+	 * end of the setting. This was a bug in 2.1.3.
+	 */
+	public function test_post_exclusion() {
+		// Search for "content".
+		$args = array(
+			's'           => 'content',
+			'post_type'   => 'post',
+			'numberposts' => -1,
+			'post_status' => 'publish',
+		);
+
+		$post_ids    = get_posts( array_merge( $args, array( 'fields' => 'ids' ) ) );
+		$exclude_ids = array();
+
+		$exclude_ids[] = array_shift( $post_ids );
+		$exclude_ids[] = array_shift( $post_ids );
+
+		$excluded_posts    = count( $exclude_ids );
+		$exclude_id_option = implode( ',', $exclude_ids );
+
+		update_option( 'relevanssi_exclude_posts', $exclude_id_option );
+
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		$posts = relevanssi_do_query( $query );
+
+		// This should find all the posts, except the excluded post.
+		$this->assertEquals( self::$post_count - $excluded_posts, $query->found_posts );
+
+		// Now add a comma in the end. This shouldn't break anything.
+		update_option( 'relevanssi_exclude_posts', $exclude_id_option . ',' );
+
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		$posts = relevanssi_do_query( $query );
+
+		// This should find all the posts, except the excluded post.
+		$this->assertEquals( self::$post_count - $excluded_posts, $query->found_posts );
+	}
+
+	/**
 	 * Uninstalls Relevanssi.
 	 */
 	public static function wpTearDownAfterClass() {
