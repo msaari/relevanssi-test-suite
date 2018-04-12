@@ -367,6 +367,16 @@ class SearchingTest extends WP_UnitTestCase {
 
 		// This should find all the posts, except the excluded post.
 		$this->assertEquals( self::$post_count - $excluded_posts, $query->found_posts );
+
+		// Make the setting a string. This should have no effect.
+		update_option( 'relevanssi_exclude_posts', 'start' );
+
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		$posts = relevanssi_do_query( $query );
+
+		// This should find all the posts.
+		$this->assertEquals( self::$post_count, $query->found_posts );
 	}
 
 	/**
