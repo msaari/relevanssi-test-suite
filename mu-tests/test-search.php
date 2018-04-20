@@ -91,6 +91,29 @@ class MuSearchTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test fuzzy searching all blogs.
+	 */
+	public function test_fuzzy_searching_all_blogs() {
+		update_option( 'relevanssi_searchblogs_all', 'on' );
+		update_option( 'relevanssi_fuzzy', 'always' );
+
+		$args  = array(
+			's'              => 'conte',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+		);
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		relevanssi_do_query( $query );
+
+		$blog_ids_present = array();
+		foreach ( $query->posts as $post ) {
+			$blog_ids_present[ $post->blog_id ] = true;
+		}
+		$this->assertEquals( 3, count( $blog_ids_present ), 'Results should span all three blogs.' );
+	}
+
+	/**
 	 * Test custom field search.
 	 */
 	public function test_search_custom_field() {
