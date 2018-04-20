@@ -66,12 +66,11 @@ END;
 
 		wp_update_post( $args );
 	}
+
 	/**
-	 * Test indexing process.
+	 * Test excerpts.
 	 *
-	 * Creates new posts. Relevanssi is active and should index them automatically.
-	 * Check if there is correct amount of posts in the index. Then rebuild the
-	 * index and see if the total still matches.
+	 * Searches for a keyword and checks that the excerpt is as long as is required.
 	 *
 	 * @return string An excerpt that should have a <strong> highlight in it.
 	 */
@@ -105,6 +104,53 @@ END;
 		$this->assertEquals( self::$excerpt_length, $words );
 
 		return $post->post_excerpt;
+	}
+
+	/**
+	 * Test ellipsis.
+	 */
+	public function test_ellipsis() {
+		global $wpdb, $relevanssi_variables;
+		// phpcs:disable WordPress.WP.PreparedSQL
+
+		// Search for "Lorem ipsum" in posts.
+		$args = array(
+			's'           => 'Lorem ipsum',
+			'post_type'   => 'post',
+			'numberposts' => -1,
+			'post_status' => 'publish',
+		);
+
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		$posts = relevanssi_do_query( $query );
+		$post  = $posts[0];
+
+		// The search terms are from the beginning, so the excerpt shouldn't start
+		// with an ellipsis.
+		$excerpt_first_three_letters = substr( $post->post_excerpt, 0, 3 );
+		$this->assertNotEquals( '...', $excerpt_first_three_letters, 'Excerpt shouldn\'t start with an ellipsis' );
+
+		// It should end with one, though.
+		$excerpt_last_three_letters = substr( $post->post_excerpt, -3, 3 );
+		$this->assertEquals( '...', $excerpt_last_three_letters, 'Excerpt should end with an ellipsis.' );
+
+		// Search for "keyword" in posts.
+		$args = array(
+			's'           => 'keyword',
+			'post_type'   => 'post',
+			'numberposts' => -1,
+			'post_status' => 'publish',
+		);
+
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		$posts = relevanssi_do_query( $query );
+		$post  = $posts[0];
+
+		// Now the excerpt should start/ with an ellipsis.
+		$excerpt_first_three_letters = substr( $post->post_excerpt, 0, 3 );
+		$this->assertEquals( '...', $excerpt_first_three_letters, 'Excerpt should start with an ellipsis.' );
 	}
 
 	/**
