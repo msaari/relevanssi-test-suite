@@ -37,41 +37,40 @@ class IndexingTest extends WP_UnitTestCase {
 
 		$distinct_docs = $wpdb->get_var( "SELECT COUNT(DISTINCT(doc)) FROM $relevanssi_table" );
 		// There should be $post_count posts in the index.
-		$this->assertEquals( $post_count, $distinct_docs );
+		$this->assertEquals( $post_count, $distinct_docs, 'Post count should be correct.' );
 
 		// This function should be able to count the number of posts.
 		$counted_total = relevanssi_count_total_posts();
-		$this->assertEquals( $post_count, $counted_total );
+		$this->assertEquals( $post_count, $counted_total, 'relevanssi_count_total_posts() should return the correct value.' );
 
 		// This function should find 0 missing posts.
 		$missing_total = relevanssi_count_missing_posts();
-		$this->assertEquals( 0, $missing_total );
+		$this->assertEquals( 0, $missing_total, 'No posts should be missing.' );
 
 		// Truncate the index.
 		relevanssi_truncate_index();
 
 		// Now there should be 0 posts in the index.
 		$distinct_docs = $wpdb->get_var( "SELECT COUNT(DISTINCT(doc)) FROM $relevanssi_table" );
-		$this->assertEquals( 0, $distinct_docs );
+		$this->assertEquals( 0, $distinct_docs, 'There should be no posts in the database.' );
 
 		// And $post_count posts should be missing.
 		$missing_total = relevanssi_count_missing_posts();
-		$this->assertEquals( $post_count, $missing_total );
+		$this->assertEquals( $post_count, $missing_total, 'Count of missing posts should be correct.' );
 
 		// Rebuild the index.
 		relevanssi_build_index( false, false, 200, false );
 
 		// Are the now $post_count posts in the index?
 		$distinct_docs = $wpdb->get_var( "SELECT COUNT(DISTINCT(doc)) FROM $relevanssi_table" );
-		$this->assertEquals( $post_count, $distinct_docs );
+		$this->assertEquals( $post_count, $distinct_docs, 'There should be correct amount of posts in the index.' );
 
 		// Try deleting a post from index.
 		$delete_post_id = array_pop( $post_ids );
 		relevanssi_remove_doc( $delete_post_id );
 
-		// There should be zero rows for this post.
 		$post_rows = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $relevanssi_table WHERE doc = %d", $delete_post_id ) );
-		$this->assertEquals( 0, $post_rows );
+		$this->assertEquals( 0, $post_rows, 'There should be zero rows for this post.' );
 
 		return $post_ids;
 	}
@@ -102,13 +101,12 @@ class IndexingTest extends WP_UnitTestCase {
 		$comment_post_id = array_pop( $post_ids );
 		$comment_ids     = $this->factory->comment->create_many( 10, array( 'comment_post_ID' => $comment_post_id ) );
 
-		// There should be one post with comments in the index.
 		$comment_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='comment'" );
-		$this->assertEquals( 1, $comment_rows );
+		$this->assertEquals( 1, $comment_rows, 'There should be one post with comments in the index.' );
 	}
 
 	/**
-	 * Tests case where same term appears in tag and category.
+	 * Tests a case where same term appears in tag and category.
 	 *
 	 * Version 2.1.1 was broken this way.
 	 *
@@ -135,7 +133,43 @@ class IndexingTest extends WP_UnitTestCase {
 		relevanssi_build_index( false, false, 200, false );
 
 		$foo_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='foo'" );
-		$this->assertEquals( 1, $foo_rows );
+		$this->assertEquals( 1, $foo_rows, 'Term "foo" should be found on one row.' );
+
+		return $post_ids;
+	}
+
+	/**
+	 * Tests tag and category indexing.
+	 *
+	 * This was broken in 4.0.7.
+	 *
+	 * @depends test_tag_category
+	 *
+	 * @param array $post_ids An array of post IDs in the index.
+	 */
+	public function test_taxonomy_indexing( $post_ids ) {
+		global $wpdb, $relevanssi_variables;
+		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
+		// phpcs:disable WordPress.WP.PreparedSQL
+
+		$post_id = array_pop( $post_ids );
+		wp_set_post_terms( $post_id, array( 'foobar' ), 'post_tag', true );
+
+		update_option( 'relevanssi_index_taxonomies_list', array( 'post_tag', 'category' ) );
+
+		// Rebuild the index. This shouldn't end up in error.
+		relevanssi_build_index( false, false, 200, false );
+
+		$foo_detail = $wpdb->get_var( "SELECT taxonomy_detail FROM $relevanssi_table WHERE term='foobar' AND doc = $post_id" );
+
+		$foo_object = json_decode( $foo_detail );
+		$this->assertNotNull( $foo_object, 'JSON needs to decode properly.' );
+
+		$foo_count = $foo_object->post_tag;
+		$this->assertEquals( 1, $foo_count, 'Post_tag value should be 1.' );
+
+		$foo_rows = $wpdb->get_var( "SELECT COUNT(*) FROM $relevanssi_table WHERE term='foobar' AND tag > 0" );
+		$this->assertEquals( 1, $foo_rows, 'There should be one row with term "foobar" and "tag" > 0.' );
 	}
 
 	/**

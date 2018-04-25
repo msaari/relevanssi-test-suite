@@ -39,6 +39,13 @@ class SearchingTest extends WP_UnitTestCase {
 	public static $and_matches;
 
 	/**
+	 * Number of posts that have taxonomy terms.
+	 *
+	 * @var int $taxonomy_matches
+	 */
+	public static $taxonomy_matches;
+
+	/**
 	 * Sets up the index.
 	 */
 	public static function wpSetUpBeforeClass() {
@@ -59,6 +66,12 @@ class SearchingTest extends WP_UnitTestCase {
 		update_option( 'relevanssi_implicit_operator', 'AND' );
 		update_option( 'relevanssi_fuzzy', 'sometimes' );
 		update_option( 'relevanssi_log_queries', 'on' );
+		update_option( 'relevanssi_index_taxonomies_list', array( 'post_tag', 'category' ) );
+
+		$cat_ids    = array();
+		$cat_ids[0] = wp_create_category( 'foo' );
+		$cat_ids[1] = wp_create_category( 'bar' );
+		$cat_ids[2] = wp_create_category( 'baz' );
 
 		self::$post_count = 10;
 		$post_ids         = self::factory()->post->create_many( self::$post_count );
@@ -68,16 +81,21 @@ class SearchingTest extends WP_UnitTestCase {
 
 		$post_author_id = $user_ids[0];
 
-		$counter           = 0;
-		self::$visible     = 0;
-		self::$and_matches = 0;
+		$counter                = 0;
+		self::$visible          = 0;
+		self::$and_matches      = 0;
+		self::$taxonomy_matches = 0;
 		foreach ( $post_ids as $id ) {
 			// Make five posts have the word 'buzzword' in a visible custom field and
-			// rest of the posts have it in an invisible custom field.
+			// rest of the posts have it in an invisible custom field. Five posts will
+			// also get tags and categories 'foo', 'bar', and 'baz'.
 			if ( $counter < 5 ) {
 				update_post_meta( $id, '_invisible', 'buzzword' );
 				update_post_meta( $id, 'keywords', 'cat dog' );
+				wp_set_post_terms( $id, array( 'foo', 'bar', 'baz' ), 'post_tag', true );
+				wp_set_post_terms( $id, $cat_ids, 'category', true );
 				self::$and_matches++;
+				self::$taxonomy_matches++;
 			} else {
 				update_post_meta( $id, 'visible', 'buzzword' );
 				self::$visible++;
@@ -459,6 +477,34 @@ class SearchingTest extends WP_UnitTestCase {
 		$first_result = array_shift( $posts );
 
 		$this->assertEquals( $pinned_for_all_post_id, $first_result->ID );
+	}
+
+	/**
+	 * Test searching for category and tag names.
+	 */
+	public function test_tags_categories() {
+		// Search for "baz".
+		$args = array(
+			's'           => 'baz',
+			'post_type'   => 'post',
+			'numberposts' => -1,
+			'post_status' => 'publish',
+		);
+
+		$query = new WP_Query();
+		$query->parse_query( $args );
+		$posts = relevanssi_do_query( $query );
+		$this->assertEquals( self::$taxonomy_matches, count( $posts ), 'Taxonomy search should find correct number of posts.' );
+
+		global $wpdb, $relevanssi_variables;
+		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
+		// phpcs:disable WordPress.WP.PreparedSQL
+
+		// Simulate free version of Relevanssi. The taxonomy search should still work.
+		// This was broken in version 4.0.7.
+		$wpdb->query( "UPDATE $relevanssi_table SET taxonomy_detail=''" );
+		$posts = relevanssi_do_query( $query );
+		$this->assertEquals( self::$taxonomy_matches, count( $posts ), 'Taxonomy search should find correct number of posts when taxonomy_detail is blanked out.' );
 	}
 
 	/**
