@@ -69,9 +69,9 @@ class SearchingTest extends WP_UnitTestCase {
 		update_option( 'relevanssi_index_taxonomies_list', array( 'post_tag', 'category' ) );
 
 		$cat_ids    = array();
-		$cat_ids[0] = wp_create_category( 'foo' );
-		$cat_ids[1] = wp_create_category( 'bar' );
-		$cat_ids[2] = wp_create_category( 'baz' );
+		$cat_ids[0] = wp_create_category( 'cat_foo_cat' );
+		$cat_ids[1] = wp_create_category( 'cat_bar_cat' );
+		$cat_ids[2] = wp_create_category( 'cat_baz_cat' );
 
 		self::$post_count = 10;
 		$post_ids         = self::factory()->post->create_many( self::$post_count );
@@ -494,17 +494,20 @@ class SearchingTest extends WP_UnitTestCase {
 		$query = new WP_Query();
 		$query->parse_query( $args );
 		$posts = relevanssi_do_query( $query );
-		$this->assertEquals( self::$taxonomy_matches, count( $posts ), 'Taxonomy search should find correct number of posts.' );
+		$this->assertEquals( self::$taxonomy_matches, count( $posts ), 'Tag search should find correct number of posts.' );
 
-		global $wpdb, $relevanssi_variables;
-		$relevanssi_table = $relevanssi_variables['relevanssi_table'];
-		// phpcs:disable WordPress.WP.PreparedSQL
+		// Search for "cat_bar_cat".
+		$args = array(
+			's'           => 'cat_bar_cat',
+			'post_type'   => 'post',
+			'numberposts' => -1,
+			'post_status' => 'publish',
+		);
 
-		// Simulate free version of Relevanssi. The taxonomy search should still work.
-		// This was broken in version 4.0.7.
-		$wpdb->query( "UPDATE $relevanssi_table SET taxonomy_detail=''" );
+		$query = new WP_Query();
+		$query->parse_query( $args );
 		$posts = relevanssi_do_query( $query );
-		$this->assertEquals( self::$taxonomy_matches, count( $posts ), 'Taxonomy search should find correct number of posts when taxonomy_detail is blanked out.' );
+		$this->assertEquals( self::$taxonomy_matches, count( $posts ), 'Category search should find correct number of posts.' );
 	}
 
 	/**
