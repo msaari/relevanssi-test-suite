@@ -52,14 +52,16 @@ class DidYouMeanTest extends WP_UnitTestCase {
 	 * Test Premium Did you mean.
 	 */
 	public function test_premium_didyoumean() {
-		$corrected = relevanssi_premium_generate_suggestion( 'carful' );
-		$this->assertEquals( 'careful', $corrected, 'Missing letter.' );
+		if ( function_exists( 'relevanssi_premium_generate_suggestion' ) ) {
+			$corrected = relevanssi_premium_generate_suggestion( 'carful' );
+			$this->assertEquals( 'careful', $corrected, 'Missing letter.' );
 
-		$corrected = relevanssi_premium_generate_suggestion( 'funreturning' );
-		$this->assertEquals( 'unreturning', $corrected, 'Additional letter.' );
+			$corrected = relevanssi_premium_generate_suggestion( 'funreturning' );
+			$this->assertEquals( 'unreturning', $corrected, 'Additional letter.' );
 
-		$corrected = relevanssi_premium_generate_suggestion( 'profision' );
-		$this->assertEquals( 'provision', $corrected, 'Switched letter.' );
+			$corrected = relevanssi_premium_generate_suggestion( 'profision' );
+			$this->assertEquals( 'provision', $corrected, 'Switched letter.' );
+		}
 	}
 
 	/**

@@ -51,65 +51,72 @@ class AttachmentTest extends WP_UnitTestCase {
 	 * content.
 	 */
 	public function test_attachments() {
-		// If this fails, the API key is not set in the RELEVANSSI_KEY environmental
-		// variable.
-		$this->assertNotEmpty( get_option( 'relevanssi_api_key ' ), 'API key not set.' );
+		if ( RELEVANSSI_PREMIUM ) {
+			// If this fails, the API key is not set in the RELEVANSSI_KEY environmental
+			// variable.
+			$this->assertNotEmpty( get_option( 'relevanssi_api_key ' ), 'API key not set.' );
 
-		// PDF.
-		$args = array(
-			's'           => 'pdf file',
-			'post_type'   => 'attachment',
-			'numberposts' => -1,
-			'post_status' => 'inherit',
-		);
+			// PDF.
+			$args = array(
+				's'           => 'pdf file',
+				'post_type'   => 'attachment',
+				'numberposts' => -1,
+				'post_status' => 'inherit',
+			);
 
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
 
-		// There should be one post matching the search.
-		$this->assertEquals( 1, count( $posts ) );
+			// There should be one post matching the search.
+			$this->assertEquals( 1, count( $posts ) );
 
-		// Check that get_permalink() returns a direct link to the .pdf file.
-		$permalink = get_permalink( $posts[0]->ID );
-		$suffix    = substr( $permalink, -4 );
-		$this->assertEquals( '.pdf', $suffix );
+			// Check that get_permalink() returns a direct link to the .pdf file.
+			$permalink = get_permalink( $posts[0]->ID );
+			$suffix    = substr( $permalink, -4 );
+			$this->assertEquals( '.pdf', $suffix );
 
-		// DOCX.
-		$args = array(
-			's'           => 'docx file',
-			'post_type'   => 'attachment',
-			'numberposts' => -1,
-			'post_status' => 'inherit',
-		);
+			// DOCX.
+			$args = array(
+				's'           => 'docx file',
+				'post_type'   => 'attachment',
+				'numberposts' => -1,
+				'post_status' => 'inherit',
+			);
 
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
 
-		// There should be one post matching the search.
-		$this->assertEquals( 1, count( $posts ) );
+			// There should be one post matching the search.
+			$this->assertEquals( 1, count( $posts ) );
 
-		// ODT.
-		$args = array(
-			's'           => 'odt file',
-			'post_type'   => 'attachment',
-			'numberposts' => -1,
-			'post_status' => 'inherit',
-		);
+			// ODT.
+			$args = array(
+				's'           => 'odt file',
+				'post_type'   => 'attachment',
+				'numberposts' => -1,
+				'post_status' => 'inherit',
+			);
 
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
 
-		// There should be one post matching the search.
-		$this->assertEquals( 1, count( $posts ) );
+			// There should be one post matching the search.
+			$this->assertEquals( 1, count( $posts ) );
+		}
 	}
 
 	/**
 	 * Uninstalls Relevanssi.
 	 */
 	public static function wpTearDownAfterClass() {
-		relevanssi_uninstall();
+		if ( function_exists( 'relevanssi_uninstall' ) ) {
+			relevanssi_uninstall();
+		}
+		if ( function_exists( 'relevanssi_uninstall_free' ) ) {
+			relevanssi_uninstall_free();
+		}
 	}
 }

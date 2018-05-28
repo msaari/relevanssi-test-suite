@@ -228,20 +228,22 @@ class SearchingTest extends WP_UnitTestCase {
 	 * Should find user profiles.
 	 */
 	public function test_user_search() {
-		// Search for "user" to find users.
-		$args = array(
-			's'           => 'user',
-			'post_type'   => 'user',
-			'numberposts' => -1,
-			'post_status' => 'publish',
-		);
+		if ( RELEVANSSI_PREMIUM ) {
+			// Search for "user" to find users.
+			$args = array(
+				's'           => 'user',
+				'post_type'   => 'user',
+				'numberposts' => -1,
+				'post_status' => 'publish',
+			);
 
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
 
-		// This should match the number of users.
-		$this->assertEquals( self::$user_count, $query->found_posts );
+			// This should match the number of users.
+			$this->assertEquals( self::$user_count, $query->found_posts );
+		}
 	}
 
 	/**
@@ -288,20 +290,22 @@ class SearchingTest extends WP_UnitTestCase {
 		// This should find the posts with both words.
 		$this->assertEquals( self::$and_matches, $query->found_posts );
 
-		// Search for "cat dog" with the OR operator.
-		$args = array(
-			's'           => 'cat dog',
-			'post_type'   => 'post',
-			'numberposts' => -1,
-			'post_status' => 'publish',
-			'operator'    => 'OR',
-		);
+		if ( RELEVANSSI_PREMIUM ) {
+			// Search for "cat dog" with the OR operator.
+			$args = array(
+				's'           => 'cat dog',
+				'post_type'   => 'post',
+				'numberposts' => -1,
+				'post_status' => 'publish',
+				'operator'    => 'OR',
+			);
 
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
 
-		// This should find all posts.
-		$this->assertEquals( self::$post_count, $query->found_posts );
+			// This should find all posts.
+			$this->assertEquals( self::$post_count, $query->found_posts );
+		}
 	}
 
 	/**
@@ -401,82 +405,84 @@ class SearchingTest extends WP_UnitTestCase {
 	 * Test post pinning for single keyword and "pin for all".
 	 */
 	public function test_pinning() {
-		// Search for "buzzword".
-		$args = array(
-			's'           => 'buzzword',
-			'post_type'   => 'post',
-			'numberposts' => -1,
-			'post_status' => 'publish',
-		);
+		if ( RELEVANSSI_PREMIUM ) {
+			// Search for "buzzword".
+			$args = array(
+				's'           => 'buzzword',
+				'post_type'   => 'post',
+				'numberposts' => -1,
+				'post_status' => 'publish',
+			);
 
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
 
-		$buzzword_posts = array();
-		foreach ( $posts as $post ) {
-			array_push( $buzzword_posts, $post->ID );
+			$buzzword_posts = array();
+			foreach ( $posts as $post ) {
+				array_push( $buzzword_posts, $post->ID );
+			}
+
+			$args = array(
+				'post__not_in' => $buzzword_posts,
+				'numberposts'  => -1,
+				'post_status'  => 'publish',
+				'post_type'    => 'post',
+				'fields'       => 'ids',
+			);
+
+			// These posts don't have "buzzword".
+			$non_buzzword_posts = get_posts( $args );
+
+			// Let's pin one of those for "buzzword".
+			$pinned_post_id = array_shift( $non_buzzword_posts );
+			update_post_meta( $pinned_post_id, '_relevanssi_pin', 'buzzword' );
+
+			// Reindex the post.
+			relevanssi_index_doc( $pinned_post_id, true, relevanssi_get_custom_fields(), true );
+
+			// Search for "buzzword".
+			$args = array(
+				's'           => 'buzzword',
+				'post_type'   => 'post',
+				'numberposts' => -1,
+				'post_status' => 'publish',
+			);
+
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
+
+			$first_result = array_shift( $posts );
+
+			$this->assertEquals( $pinned_post_id, $first_result->ID );
+
+			// Then unpin.
+			delete_post_meta( $pinned_post_id, '_relevanssi_pin' );
+			relevanssi_index_doc( $pinned_post_id, true, relevanssi_get_custom_fields(), true );
+
+			// Let's take another post and pin it for all keywords.
+			$pinned_for_all_post_id = array_shift( $non_buzzword_posts );
+			update_post_meta( $pinned_for_all_post_id, '_relevanssi_pin_for_all', 'on' );
+			update_post_meta( $pinned_for_all_post_id, 'visible', 'buzzword' );
+			relevanssi_index_doc( $pinned_for_all_post_id, true, relevanssi_get_custom_fields(), true );
+
+			// Search for "buzzword".
+			$args = array(
+				's'           => 'buzzword',
+				'post_type'   => 'post',
+				'numberposts' => -1,
+				'post_status' => 'publish',
+			);
+
+			$query = new WP_Query();
+			$query->parse_query( $args );
+			$posts = relevanssi_do_query( $query );
+
+			$first_result = array_shift( $posts );
+
+			$this->assertEquals( $pinned_for_all_post_id, $first_result->ID );
 		}
-
-		$args = array(
-			'post__not_in' => $buzzword_posts,
-			'numberposts'  => -1,
-			'post_status'  => 'publish',
-			'post_type'    => 'post',
-			'fields'       => 'ids',
-		);
-
-		// These posts don't have "buzzword".
-		$non_buzzword_posts = get_posts( $args );
-
-		// Let's pin one of those for "buzzword".
-		$pinned_post_id = array_shift( $non_buzzword_posts );
-		update_post_meta( $pinned_post_id, '_relevanssi_pin', 'buzzword' );
-
-		// Reindex the post.
-		relevanssi_index_doc( $pinned_post_id, true, relevanssi_get_custom_fields(), true );
-
-		// Search for "buzzword".
-		$args = array(
-			's'           => 'buzzword',
-			'post_type'   => 'post',
-			'numberposts' => -1,
-			'post_status' => 'publish',
-		);
-
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
-
-		$first_result = array_shift( $posts );
-
-		$this->assertEquals( $pinned_post_id, $first_result->ID );
-
-		// Then unpin.
-		delete_post_meta( $pinned_post_id, '_relevanssi_pin' );
-		relevanssi_index_doc( $pinned_post_id, true, relevanssi_get_custom_fields(), true );
-
-		// Let's take another post and pin it for all keywords.
-		$pinned_for_all_post_id = array_shift( $non_buzzword_posts );
-		update_post_meta( $pinned_for_all_post_id, '_relevanssi_pin_for_all', 'on' );
-		update_post_meta( $pinned_for_all_post_id, 'visible', 'buzzword' );
-		relevanssi_index_doc( $pinned_for_all_post_id, true, relevanssi_get_custom_fields(), true );
-
-		// Search for "buzzword".
-		$args = array(
-			's'           => 'buzzword',
-			'post_type'   => 'post',
-			'numberposts' => -1,
-			'post_status' => 'publish',
-		);
-
-		$query = new WP_Query();
-		$query->parse_query( $args );
-		$posts = relevanssi_do_query( $query );
-
-		$first_result = array_shift( $posts );
-
-		$this->assertEquals( $pinned_for_all_post_id, $first_result->ID );
 	}
 
 	/**
@@ -514,6 +520,11 @@ class SearchingTest extends WP_UnitTestCase {
 	 * Uninstalls Relevanssi.
 	 */
 	public static function wpTearDownAfterClass() {
-		relevanssi_uninstall();
+		if ( function_exists( 'relevanssi_uninstall' ) ) {
+			relevanssi_uninstall();
+		}
+		if ( function_exists( 'relevanssi_uninstall_free' ) ) {
+			relevanssi_uninstall_free();
+		}
 	}
 }

@@ -63,6 +63,11 @@ class StopwordTest extends WP_UnitTestCase {
 	 * Uninstalls Relevanssi.
 	 */
 	public static function wpTearDownAfterClass() {
-		relevanssi_uninstall();
+		if ( function_exists( 'relevanssi_uninstall' ) ) {
+			relevanssi_uninstall();
+		}
+		if ( function_exists( 'relevanssi_uninstall_free' ) ) {
+			relevanssi_uninstall_free();
+		}
 	}
 }
