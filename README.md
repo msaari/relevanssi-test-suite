@@ -4,13 +4,12 @@ A work-in-progress set of unit tests for Relevanssi and Relevanssi Premium.
 
 ## Installation
 
-1. Set up Flywheel Local.
-1. Install Relevanssi.
-1. Use [setup-phpunit.sh](https://gist.github.com/keesiemeijer/a888f3d9609478b310c2d952644891ba) to set up PHPUnit.
-1. Use `wp scaffold plugin relevanssi-premium` to scaffold the tests.
-1. Copy the test suite to the `tests` folder.
+1. Set up WP dev environment, either using [WP.org instructions](https://make.wordpress.org/core/handbook/testing/automated-testing/phpunit/) or [rask's wp-test-framework](https://github.com/rask/wp-test-framework).
+1. Place Relevanssi somewhere.
+1. Copy the test suite to the `tests` folder in the Relevanssi folder.
+1. Copy either `bootstrap-rask.php` or `bootstrap-wporg.php` in the `tests` folder as `bootstrap.php`. In case you're using WP.org version, adjust the `WP_TESTS_DIR` path in the file.
 1. Set your api key with `export RELEVANSSI_KEY="your key"`.
-1. Test!
+1. Test using `phpunit`.
 
 ## Feedback
 Any feedback on the test suite is welcome: suggestions for new tests, either in the form of tests or ideas of what to test, are most welcome. Just post an issue.
