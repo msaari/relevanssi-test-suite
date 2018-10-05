@@ -2,12 +2,22 @@
 
 A work-in-progress set of unit tests for Relevanssi and Relevanssi Premium.
 
-## Installation
+## Easier installation
 
-1. Set up WP dev environment, either using [WP.org instructions](https://make.wordpress.org/core/handbook/testing/automated-testing/phpunit/) or [rask's wp-test-framework](https://github.com/rask/wp-test-framework).
-1. Place Relevanssi somewhere.
-1. Copy the test suite to the `tests` folder in the Relevanssi folder.
-1. Copy either `bootstrap-rask.php` or `bootstrap-wporg.php` in the `tests` folder as `bootstrap.php`. In case you're using WP.org version, adjust the `WP_TESTS_DIR` path in the file.
+1. Download Relevanssi Premium.
+1. Run `composer` in Relevanssi Premium folder, thus installing [rask's wp-test-framework](https://github.com/rask/wp-test-framework).
+1. Install WordPress somewhere (for example using `wp core download`).
+1. Set up the test config for WP from [sample test config](https://develop.svn.wordpress.org/trunk/wp-tests-config-sample.php).
+1. Copy `bootstrap-rask.php` in the `tests` folder as `bootstrap.php`.
+1. Set your api key with `export RELEVANSSI_KEY="your key"`.
+1. Set the path to the WP instance with `export WP_TESTS_INSTALLATION=/path/to/wordpress`.
+1. Test using `phpunit`.
+
+## More complicated installation
+
+1. Download Relevanssi Premium.
+1. Set up the WP dev environment using [WP.org instructions](https://make.wordpress.org/core/handbook/testing/automated-testing/phpunit/). (This is the complicated bit.)
+1. Copy `bootstrap-wporg.php` in the `tests` folder as `bootstrap.php`. Adjust the `WP_TESTS_DIR` path in the file.
 1. Set your api key with `export RELEVANSSI_KEY="your key"`.
 1. Test using `phpunit`.
 
